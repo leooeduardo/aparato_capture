@@ -19,12 +19,12 @@ export function Recorder({ onNext, onBack, videoSource, warpState, setRecordedBl
     const { ref: containerRef, element: containerElement, width, height } = useElementSize();
     const [isRecording, setIsRecording] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
     const [recordingKey, setRecordingKey] = useState(0);
 
     const processingRef = useRef(false);
     const durationRef = useRef(0);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const chunksRef = useRef<Blob[]>([]); // Ref to track chunks without closure staleness
     const { sendMessage } = useWarpBroadcast();
     const { convertToMp4, progress: conversionProgress } = useVideoProcessor();
 
@@ -32,7 +32,7 @@ export function Recorder({ onNext, onBack, videoSource, warpState, setRecordedBl
     const handleDataAvailable = (event: BlobEvent) => {
         if (event.data && event.data.size > 0) {
             console.log('[Recorder] Chunk received:', event.data.size);
-            setRecordedChunks((prev) => [...prev, event.data]);
+            chunksRef.current.push(event.data);
         }
     };
 
@@ -45,7 +45,7 @@ export function Recorder({ onNext, onBack, videoSource, warpState, setRecordedBl
             return;
         }
 
-        setRecordedChunks([]);
+        chunksRef.current = [];
 
         // Get Duration reliably
         const tempVideo = document.createElement('video');
@@ -79,7 +79,7 @@ export function Recorder({ onNext, onBack, videoSource, warpState, setRecordedBl
         mediaRecorder.ondataavailable = handleDataAvailable;
         mediaRecorder.onerror = (e) => console.error('[Recorder] Error:', e);
         mediaRecorder.onstop = () => {
-            console.log('[Recorder] Stopped. Chunks:', recordedChunks.length); // Warning: recordedChunks closure might be stale here if not ref
+            console.log('[Recorder] Stopped. Chunks:', chunksRef.current.length);
             setIsRecording(false);
             setIsProcessing(true); // Start processing phase
         };
@@ -103,10 +103,10 @@ export function Recorder({ onNext, onBack, videoSource, warpState, setRecordedBl
     // Process to MP4 after recording stops
     useEffect(() => {
         const processVideo = async () => {
-            if (isProcessing && recordedChunks.length > 0 && !processingRef.current) {
+            if (isProcessing && chunksRef.current.length > 0 && !processingRef.current) {
                 processingRef.current = true;
-                console.log('[Recorder] Processing Started. Chunks:', recordedChunks.length);
-                const webmBlob = new Blob(recordedChunks, { type: 'video/webm' });
+                console.log('[Recorder] Processing Started. Chunks:', chunksRef.current.length);
+                const webmBlob = new Blob(chunksRef.current, { type: 'video/webm' });
 
                 // Convert to MP4
                 try {
@@ -140,7 +140,7 @@ export function Recorder({ onNext, onBack, videoSource, warpState, setRecordedBl
         if (isProcessing) {
             processVideo();
         }
-    }, [isProcessing, recordedChunks, convertToMp4, setRecordedBlobUrl, onNext, sendMessage]);
+    }, [isProcessing, convertToMp4, setRecordedBlobUrl, onNext, sendMessage, setRecordedFormat]);
 
     return (
         <div className="flex h-full flex-col bg-background">

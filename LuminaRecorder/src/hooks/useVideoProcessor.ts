@@ -15,7 +15,9 @@ export function useVideoProcessor() {
             console.log('[FFmpeg Load]', message);
         });
 
-        const baseURL = `${window.location.origin}/ffmpeg-core`;
+        // Use relative path which works for both Vite Dev and Electron (file://)
+        // provided 'base: "./"' is set in vite.config.ts
+        const baseURL = './ffmpeg-core';
 
         console.log('[FFmpeg] Loading from:', baseURL);
 
