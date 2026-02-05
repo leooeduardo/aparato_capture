@@ -1350,7 +1350,7 @@ export default function App() {
                                     <input
                                         type="number"
                                         value={totalResolution.width}
-                                        onChange={(e) => setTotalResolution(prev => ({ ...prev, width: parseInt(e.target.value) || 1920 }))}
+                                        onChange={(e) => setTotalResolution((prev: { width: number; height: number }) => ({ ...prev, width: parseInt(e.target.value) || 1920 }))}
                                         className="w-full bg-slate-800 text-white px-1 py-0.5 rounded text-[10px] border border-slate-700"
                                     />
                                 </div>
@@ -1359,7 +1359,7 @@ export default function App() {
                                     <input
                                         type="number"
                                         value={totalResolution.height}
-                                        onChange={(e) => setTotalResolution(prev => ({ ...prev, height: parseInt(e.target.value) || 1080 }))}
+                                        onChange={(e) => setTotalResolution((prev: { width: number; height: number }) => ({ ...prev, height: parseInt(e.target.value) || 1080 }))}
                                         className="w-full bg-slate-800 text-white px-1 py-0.5 rounded text-[10px] border border-slate-700"
                                     />
                                 </div>
