@@ -2,6 +2,10 @@
   "name": "lumina-recorder",
   "private": true,
   "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/leooeduardo/aparato_capture.git"
+  },
   "main": "electron/main.js",
   "type": "module",
   "scripts": {
