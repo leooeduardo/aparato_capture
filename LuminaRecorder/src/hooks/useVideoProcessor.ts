@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback } from 'react';
 import { FFmpeg } from '@ffmpeg/ffmpeg';
-import { fetchFile } from '@ffmpeg/util';
+import { fetchFile, toBlobURL } from '@ffmpeg/util';
 
 export function useVideoProcessor() {
     const ffmpegRef = useRef(new FFmpeg());
@@ -15,16 +15,18 @@ export function useVideoProcessor() {
             console.log('[FFmpeg Load]', message);
         });
 
-        // Use relative path which works for both Vite Dev and Electron (file://)
-        // provided 'base: "./"' is set in vite.config.ts
-        const baseURL = './ffmpeg-core';
+        const isDev = import.meta.env.DEV;
+        const isElectron = window.navigator.userAgent.toLowerCase().includes('electron');
 
-        console.log('[FFmpeg] Loading from:', baseURL);
+        // Use absolute path for dev (served from public) and relative for prod (Electron file://)
+        const baseURL = (isDev && !isElectron) ? '/ffmpeg-core' : './ffmpeg-core';
+
+        console.log('[FFmpeg] Loading from:', baseURL, '(isDev:', isDev, 'isElectron:', isElectron, ')');
 
         try {
             await ffmpeg.load({
-                coreURL: `${baseURL}/ffmpeg-core.js`,
-                wasmURL: `${baseURL}/ffmpeg-core.wasm`,
+                coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+                wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
             });
             console.log('[FFmpeg] Load Success');
             setLoaded(true);
